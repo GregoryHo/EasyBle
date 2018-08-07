@@ -2,6 +2,7 @@ package com.ns.greg.easyble
 
 import android.annotation.TargetApi
 import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattService
 import android.bluetooth.le.AdvertiseCallback
 import android.bluetooth.le.AdvertiseSettings
@@ -9,6 +10,8 @@ import android.content.Context
 import android.os.Build.VERSION_CODES
 import com.ns.greg.ble.BleServer
 import com.ns.greg.ble.interfacies.BleServerObserver
+import com.ns.greg.ble.services.BleServiceOption
+import com.ns.greg.ble.services.characteristics.BleCharacteristicWrapper
 import java.util.UUID
 import kotlin.LazyThreadSafetyMode.NONE
 
@@ -30,7 +33,17 @@ class BleDemoServer(
     bleServer.subscribe(this)
     bleServer.open()
     // Add your service here
-    //bleServer.addServices()
+    bleServer.addService(
+        BleServiceOption.Builder()
+            .setUuid(UUID.randomUUID())
+            .setCharacteristics(
+                BleCharacteristicWrapper.Builder()
+                    .setUuid(UUID.randomUUID())
+                    .addProperties(BluetoothGattCharacteristic.PROPERTY_READ)
+                    .addPermissions(BluetoothGattCharacteristic.PERMISSION_READ)
+                    .build()
+            ).build()
+    )
     bleServer.startAdvertising(UUID.randomUUID(), this)
   }
 
