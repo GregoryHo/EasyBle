@@ -1,0 +1,56 @@
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
+apply plugin: 'kotlin-kapt'
+
+android {
+  compileSdkVersion buildVersions.compileSdk
+  defaultConfig {
+    minSdkVersion buildVersions.minSdk
+    targetSdkVersion buildVersions.targetSdk
+    versionCode 1
+    versionName "1.0"
+    testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+  }
+  buildTypes {
+    release {
+      minifyEnabled false
+      proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+    }
+  }
+  kotlin {
+    experimental {
+      coroutines 'enable'
+    }
+  }
+  compileOptions {
+    sourceCompatibility = buildVersions.sourceCompatibility
+    targetCompatibility = buildVersions.targetCompatibility
+  }
+  sourceSets {
+    main {
+      // Include kotlin src
+      java.srcDirs += 'src/main/kotlin'
+    }
+  }
+}
+
+dependencies {
+  implementation fileTree(dir: 'libs', include: ['*.jar'])
+  implementation deps.kotlin.stdLib
+  implementation deps.kotlin.coroutinesCore
+  implementation deps.kotlin.coroutinesAndroid
+  implementation deps.google.dagger
+  kapt deps.google.daggerProcessor
+  implementation deps.google.daggerAndroid
+  implementation deps.google.daggerAndroidSupport
+  kapt deps.google.daggerAndroidProcessor
+  implementation deps.square.okHttp
+  implementation deps.reactive.rxJava2
+  implementation deps.reactive.rxAndroid
+  implementation deps.greg.fastHook
+  implementation deps.greg.fancyLogger
+  testImplementation 'junit:junit:4.12'
+  androidTestImplementation 'com.android.support.test:runner:1.0.2'
+  androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+}

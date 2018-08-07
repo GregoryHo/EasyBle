@@ -1,0 +1,13 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.ns.greg.ble">
+
+  <application>
+    <activity
+        android:name=".BtRequestActivity"
+        android:configChanges="orientation|keyboardHidden|screenSize"
+        android:multiprocess="true"
+        android:theme="@style/ActivityTheme"
+        android:windowSoftInputMode="stateHidden|stateAlwaysHidden"/>
+  </application>
+
+</manifest>
