@@ -10,12 +10,6 @@ internal class PacketProcessor {
 
   companion object {
 
-    private const val READ = 0x02
-    private const val WRITE_WITHOUT_RESPONSE = 0x04
-    private const val WRITE = 0x08
-    private const val NOTIFY = 0x10
-    private const val INDICATE = 0x20
-    private const val NO_MORE_MESSAGE = 0
     private const val MORE_MESSAGE = 1
 
     /**

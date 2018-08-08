@@ -383,7 +383,7 @@ class BleServer(
     requestId: Int,
     execute: Boolean
   ) {
-    // TODO: Don't event know what the fxck is this
+    // TODO: Should implement this.
   }
 
   override fun onNotificationSent(
