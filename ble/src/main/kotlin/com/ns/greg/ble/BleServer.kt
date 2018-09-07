@@ -151,6 +151,10 @@ class BleServer(
     }
   }
 
+  fun cancelConnection(device: BluetoothDevice) {
+    gattServer.cancelConnection(device)
+  }
+
   private fun getCharacteristicWrapper(
     device: BluetoothDevice,
     uuid: UUID
@@ -270,7 +274,7 @@ class BleServer(
         BluetoothProfile.STATE_CONNECTING -> {
           if (!multipleClients && !clients.isEmpty() && clients[0] != device) {
             // Only support one by one, cancel others connection
-            gattServer.cancelConnection(this)
+            cancelConnection(this)
           }
         }
         BluetoothProfile.STATE_CONNECTED -> {
