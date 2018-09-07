@@ -48,6 +48,7 @@ class BleDemoServer(
   }
 
   fun close() {
+    bleServer.stopAdvertising(this)
     bleServer.close()
     bleServer.unsubscribe()
   }
