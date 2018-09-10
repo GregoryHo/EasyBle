@@ -256,12 +256,12 @@ class BleServer(
   }
 
   private fun hasWriteProperties(characteristic: BluetoothGattCharacteristic): Boolean {
-    val properties = characteristic.properties and 0x0F
+    val properties = characteristic.properties and 0x0C
     return properties == BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE || properties == BluetoothGattCharacteristic.PROPERTY_WRITE
   }
 
   private fun hasReadProperties(characteristic: BluetoothGattCharacteristic): Boolean {
-    return characteristic.properties and 0x0F == BluetoothGattCharacteristic.PROPERTY_READ
+    return characteristic.properties and 0x02 == BluetoothGattCharacteristic.PROPERTY_READ
   }
 
   override fun onConnectionStateChange(
