@@ -3,7 +3,7 @@ def buildVersions = [:]
 buildVersions.minSdk = 18
 buildVersions.targetSdk = 26
 buildVersions.compileSdk = 26
-buildVersions.buildTools = "27.0.3"
+buildVersions.buildTools = "28.0.3"
 buildVersions.sourceCompatibility = JavaVersion.VERSION_1_8
 buildVersions.targetCompatibility = JavaVersion.VERSION_1_8
 ext.buildVersions = buildVersions
@@ -14,8 +14,8 @@ ext.buildVersions = buildVersions
 ext.deps = [:]
 // dependencies versions defined
 def versions = [:]
-versions.androidGradlePlugin = "3.1.4"
-versions.kotlin = "1.2.60"
+versions.androidGradlePlugin = "3.2.1"
+versions.kotlin = "1.2.71"
 versions.ktx = "0.3"
 versions.coroutines = "0.22.5"
 versions.anko = "0.10.5"
@@ -37,7 +37,10 @@ gradle.kotlin = "org.jetbrains.kotlin:kotlin-gradle-plugin:$versions.kotlin"
 deps.gradle = gradle
 // Kotlin
 def kotlin = [:]
-kotlin.stdLib = "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$versions.kotlin"
+kotlin.stdLib = [
+    'common': "org.jetbrains.kotlin:kotlin-stdlib-common:$versions.kotlin",
+    'jdk8': "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$versions.kotlin"
+]
 kotlin.ktx = "androidx.corde:corde-ktx:$versions.ktx"
 kotlin.coroutinesCore = "org.jetbrains.kotlinx:kotlinx-coroutines-core:$versions.coroutines"
 kotlin.coroutinesAndroid = "org.jetbrains.kotlinx:kotlinx-coroutines-android:$versions.coroutines"
