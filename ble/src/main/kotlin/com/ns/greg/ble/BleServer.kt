@@ -60,7 +60,7 @@ class BleServer(
   }
 
   @Synchronized fun open() {
-    BleLogger.log("{Open:{\"BLE server\": \"DOG CAGE\"}}")
+    BleLogger.log("ServerOpen")
     gattServer = bluetoothManager.openGattServer(context, this)
   }
 
@@ -213,7 +213,7 @@ class BleServer(
       }
 
       if (!isAdded) {
-        BleLogger.log("{Connected:{\"device\": \"$device\"}}")
+        BleLogger.log("ClientConnected", "device: $device")
         clients.add(device)
         characteristicWrappersMap[device] = ArrayList(characteristicWrappers)
         observer?.onConnected(device)
@@ -234,7 +234,7 @@ class BleServer(
       }
 
       removed?.run {
-        BleLogger.log("{Disconnected:{\"device\": \"$this\"}}")
+        BleLogger.log("ClientDisconnected", "device: $device")
         clients.remove(this)
         characteristicWrappersMap.remove(device)
         observer?.onDisconnected(this)
@@ -302,7 +302,7 @@ class BleServer(
   ) {
     service?.run {
       if (status == BluetoothGatt.GATT_SUCCESS) {
-        BleLogger.log("{ServiceAdded:{\"service\": ${this.uuid}}}")
+        BleLogger.log("onServiceAdded", "id: $uuid")
         observer?.onServiceAdded(this, null)
       } else {
         observer?.onServiceAdded(
@@ -325,7 +325,7 @@ class BleServer(
       characteristic?.also { c ->
         val uuid = c.uuid
         if (isValidCharacteristic(c) && hasWriteProperties(c)) {
-          BleLogger.log("{WriteRequest:{\"characteristic\": $uuid}}")
+          BleLogger.log("onCharacteristicWriteRequest", "id: $uuid, device: $device")
           getCharacteristicWrapper(it, uuid)?.run {
             with(getReadBuffer()) {
               read(value)
@@ -359,7 +359,7 @@ class BleServer(
       characteristic?.also { c ->
         val uuid = c.uuid
         if (isValidCharacteristic(c) && hasReadProperties(c)) {
-          BleLogger.log("{ReadRequest:{\"characteristic\": $uuid}}")
+          BleLogger.log("onCharacteristicReadRequest", "id: $uuid, device: $device")
           getCharacteristicWrapper(it, uuid)?.run {
             with(getWriteBuffer()) {
               observer?.onReadRequest(it, uuid, null)

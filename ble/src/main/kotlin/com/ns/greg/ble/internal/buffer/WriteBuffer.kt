@@ -1,5 +1,6 @@
 package com.ns.greg.ble.internal.buffer
 
+import com.ns.greg.ble.internal.BleLogger
 import com.ns.greg.ble.internal.PacketProcessor
 
 /**
@@ -67,9 +68,12 @@ internal class WriteBuffer : BleBuffer {
         bytes[0] = (bytes[0] + 0x80).toByte()
       }
 
-      /*BleLogger.log(
-          "{\"WriteBuffer\":{\"EOP\": ${isFoundNoMoreFlag()}, \"sequence\":$sequence}}"
-      )*/
+      BleLogger.log(
+          "write", "header: ${String.format(
+          "%8s", Integer.toBinaryString(bytes[0].toInt() and 0xFF)
+      ).replace(' ', '0')}"
+      )
+      BleLogger.log("", "EOP: ${isFoundNoMoreFlag()}, sequence: $sequence")
       System.arraycopy(it, startIndex, bytes, 1 /* skip header */, payloadSize)
       return bytes
     } ?: run {

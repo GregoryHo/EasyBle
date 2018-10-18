@@ -171,7 +171,7 @@ internal class BleConnectionImp(
       status: Int,
       newState: Int
     ) {
-      BleLogger.log("{OnConnectionStateChange:{\"status\": $status, \"newState\": $newState}}")
+      BleLogger.log("OnConnectionStateChange", "status: $status, newState: $newState")
       when (status) {
         BluetoothGatt.GATT_SUCCESS -> {
           when (newState) {
@@ -205,10 +205,23 @@ internal class BleConnectionImp(
       gatt: BluetoothGatt?,
       status: Int
     ) {
-      BleLogger.log("{OnDiscovered:{\"status\": $status}}")
       gatt?.let {
-        instance.device.setServices(it.services)
-        instance.connectionObserver?.onDiscovered(status)
+        if (status == BluetoothGatt.GATT_SUCCESS) {
+          BleLogger.log("OnServicesDiscovered success.")
+          it.services?.forEach { service ->
+            BleLogger.log("service", "uuid: ${service.uuid}")
+            service.characteristics?.forEach { characteristic ->
+              BleLogger.log("characteristic", "uuid: ${characteristic.uuid}")
+            }
+          }
+
+          instance.device.setServices(it.services)
+          instance.connectionObserver?.onDiscovered(status)
+        } else {
+          BleLogger.log("OnServicesDiscovered failed.")
+          /* just disconnect with BLE device */
+          gatt.disconnect()
+        }
       }
     }
 
@@ -219,7 +232,7 @@ internal class BleConnectionImp(
     ) {
       characteristic?.let {
         val uuid = it.uuid
-        BleLogger.log("{Read:{\"uuid\": $uuid, \"status\": $status}}")
+        BleLogger.log("onCharacteristicRead", "id: $uuid, status: $status")
         when (status) {
           BluetoothGatt.GATT_SUCCESS -> {
             with(instance.characteristicWrapper.getReadBuffer()) {
@@ -246,7 +259,7 @@ internal class BleConnectionImp(
     ) {
       characteristic?.let {
         val uuid = it.uuid
-        BleLogger.log("{Write:{\"uuid\": $uuid, \"status\": $status}}")
+        BleLogger.log("onCharacteristicWrite", "id: $uuid, status: $status")
         when (status) {
           BluetoothGatt.GATT_SUCCESS -> {
             with(instance.characteristicWrapper.getWriteBuffer()) {

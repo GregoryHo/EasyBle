@@ -1,5 +1,6 @@
 package com.ns.greg.ble.internal
 
+import android.util.Log
 import com.ns.greg.ble.BuildConfig
 import com.ns.greg.library.fancy_logger.FancyLogger
 import com.ns.greg.library.fancy_logger.Printer
@@ -12,20 +13,23 @@ internal class BleLogger {
 
   companion object {
 
-    init {
-      if (BuildConfig.DEBUG) {
-        FancyLogger.add(
-            FancyLogger.LOW_PRIORITY,
-            Printer.Builder().showThreadInfo(false).setMethodCount(0).build()
-        )
-      }
+    private const val TAG = "BleLogger"
+    private var debug = false
+
+    fun enableLogger() {
+      debug = true
     }
 
-    private const val TAG = "BleLogger"
+    fun log(
+      functionName: String,
+      message: String = ""
+    ) {
+      if (BuildConfig.DEBUG && debug) {
+        if (functionName.isNotEmpty()) {
+          Log.d(TAG, "-> $functionName")
+        }
 
-    fun log(message: String) {
-      if (BuildConfig.DEBUG) {
-        FancyLogger.e(TAG, message)
+        Log.d(TAG, message)
       }
     }
   }

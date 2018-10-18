@@ -28,7 +28,6 @@ internal class ReadBuffer : BleBuffer {
 
   fun isAggregated(): Boolean {
     if (!isFoundNoMoreFlag()) {
-      BleLogger.log("Not found ended sequence.")
       return false
     }
 
@@ -56,8 +55,8 @@ internal class ReadBuffer : BleBuffer {
       found.append("[")
           .append(lastSequence)
           .append("]")
-      BleLogger.log("Missed sequence: " + missed.toString())
-      BleLogger.log("Found sequence: " + found.toString())
+      BleLogger.log("MissedSequence", missed.toString())
+      BleLogger.log("FoundedSequence", found.toString())
     }
 
     return length == lastSequence
@@ -85,7 +84,14 @@ internal class ReadBuffer : BleBuffer {
     }
 
     val header = data[0]
+    val hasMore = PacketProcessor.hasMoreMessage(header)
     val sequence = PacketProcessor.getSequence(header)
+    BleLogger.log(
+        "read", "header: ${String.format(
+        "%8s", Integer.toBinaryString(header.toInt() and 0xFF)
+    ).replace(' ', '0')}"
+    )
+    BleLogger.log("", "EOP: ${!hasMore}, sequence: $sequence")
     // If this sequence is already read
     if (sparseSequence[sequence] != 0) {
       return
@@ -93,16 +99,12 @@ internal class ReadBuffer : BleBuffer {
 
     val startIndex = PacketProcessor.getSequenceIndex(sequence)
     val packetSize = PacketProcessor.getPacketSize(startIndex, length)
-    val hasMore = PacketProcessor.hasMoreMessage(header)
     if (!hasMore) {
       if (getAtomicNoMoreFlag().compareAndSet(false, true)) {
         this.packetSize = packetSize
       }
     }
 
-    /*BleLogger.log(
-        "{\"ReadBuffer\":{\"EOP\": ${!hasMore}, \"sequence\":$sequence}}"
-    )*/
     // Check buffer is null or less than the packet size
     getBuffer()?.let {
       val bufferLength = it.size
