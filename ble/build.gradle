@@ -37,19 +37,10 @@ android {
 
 dependencies {
   implementation fileTree(dir: 'libs', include: ['*.jar'])
-  implementation deps.kotlin.stdLib
+  implementation deps.kotlin.stdLib.jdk8
   implementation deps.kotlin.coroutinesCore
   implementation deps.kotlin.coroutinesAndroid
-  implementation deps.google.dagger
-  kapt deps.google.daggerProcessor
-  implementation deps.google.daggerAndroid
-  implementation deps.google.daggerAndroidSupport
-  kapt deps.google.daggerAndroidProcessor
-  implementation deps.square.okHttp
-  implementation deps.reactive.rxJava2
-  implementation deps.reactive.rxAndroid
   implementation deps.greg.fastHook
-  implementation deps.greg.fancyLogger
   testImplementation 'junit:junit:4.12'
   androidTestImplementation 'com.android.support.test:runner:1.0.2'
   androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'

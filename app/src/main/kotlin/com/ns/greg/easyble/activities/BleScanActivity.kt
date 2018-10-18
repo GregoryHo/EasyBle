@@ -224,11 +224,11 @@ class BleScanActivity : AppCompatActivity(), OnItemClickListener, OnClickListene
     private val rssis = ArrayList<Int>()
 
     override fun onCreateViewHolderImp(parent: ViewGroup?): BaseRecyclerViewHolder {
-      val holder = BaseRecyclerViewHolder(
+      return BaseRecyclerViewHolder(
           LayoutInflater.from(context).inflate(R.layout.item_ble_device_content, parent, false)
-      )
-      holder.onItemClickListener = instance
-      return holder
+      ).also {
+        it.onItemClickListener = instance
+      }
     }
 
     override fun getInitItemCount(): Int {
