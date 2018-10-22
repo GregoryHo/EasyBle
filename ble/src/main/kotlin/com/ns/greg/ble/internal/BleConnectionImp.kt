@@ -187,14 +187,16 @@ internal class BleConnectionImp(
             BluetoothProfile.STATE_DISCONNECTED -> {
               if (instance.getConnectionState() == CLOSING) {
                 instance.setConnectionState(CLOSED)
+                gatt?.close()
               } else {
                 instance.setConnectionState(DISCONNECTED)
               }
             }
           }
         }
-        BluetoothGatt.GATT_FAILURE -> {
+        else -> {
           instance.setConnectionState(FAILURE)
+          gatt?.close()
         }
       }
 
