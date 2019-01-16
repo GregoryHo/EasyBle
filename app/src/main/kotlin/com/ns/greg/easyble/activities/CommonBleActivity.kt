@@ -7,9 +7,9 @@ import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import com.ns.greg.ble.BleClient
 import com.ns.greg.ble.ConnectionState
+import com.ns.greg.ble.ConnectionState.CLOSED
 import com.ns.greg.ble.ConnectionState.CONNECTED
 import com.ns.greg.ble.ConnectionState.DISCONNECTED
-import com.ns.greg.ble.ConnectionState.FAILURE
 import com.ns.greg.ble.interfacies.BleConnection
 import com.ns.greg.ble.interfacies.BleConnectionObserver
 
@@ -38,14 +38,17 @@ class CommonBleActivity : AppCompatActivity() {
       override fun onConnectionStateChanged(state: ConnectionState) {
         when (state) {
           CONNECTED -> {
-            // discover services
+            /* connect to gatt, discover service */
             connection.discoverServices()
           }
-          FAILURE, DISCONNECTED -> {
-            // re-open connection
+          DISCONNECTED -> {
+            /* disconnected with gatt */
+          }
+          CLOSED -> {
+            /* gatt close */
           }
           else -> {
-            // just ignored others
+            /* ignored */
           }
         }
       }

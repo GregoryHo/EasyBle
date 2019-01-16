@@ -1,6 +1,5 @@
 package com.ns.greg.ble
 
-import android.app.PendingIntent.getService
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCharacteristic
@@ -20,8 +19,9 @@ import com.ns.greg.ble.interfacies.BleServerObserver
 import com.ns.greg.ble.internal.BleLogger
 import com.ns.greg.ble.services.BleServiceOption
 import com.ns.greg.ble.services.characteristics.BleCharacteristicWrapper
-import kotlinx.coroutines.experimental.delay
-import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.net.UnknownServiceException
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
@@ -75,7 +75,7 @@ class BleServer(
   }
 
   fun addServices(vararg serviceOptions: BleServiceOption) {
-    launch {
+    GlobalScope.launch {
       serviceOptions.forEach {
         addService(it)
         delay(1000)

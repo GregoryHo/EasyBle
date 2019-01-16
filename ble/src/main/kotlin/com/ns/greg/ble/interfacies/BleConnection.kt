@@ -14,6 +14,8 @@ interface BleConnection {
 
   fun open()
 
+  fun disconnect()
+
   fun close()
 
   fun discoverServices()

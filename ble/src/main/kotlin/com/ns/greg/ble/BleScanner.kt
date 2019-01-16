@@ -10,9 +10,9 @@ import android.os.Build.VERSION_CODES
 import com.ns.greg.ble.interfacies.BleScanListener
 import com.ns.greg.ble.internal.BleScanner17
 import com.ns.greg.ble.internal.BleScanner21
-import kotlinx.coroutines.experimental.CommonPool
-import kotlinx.coroutines.experimental.delay
-import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.lang.ref.WeakReference
 import java.util.UUID
 
@@ -45,7 +45,7 @@ open class BleScanner(
     if (scanner.startScan()) {
       bleScanListener.onStartScan()
       if (scanPeriod > 0) {
-        launch(CommonPool) {
+        GlobalScope.launch {
           delay(scanPeriod)
           stopScan()
         }

@@ -13,7 +13,6 @@ import com.ns.greg.ble.ConnectionState.CONNECTED
 import com.ns.greg.ble.ConnectionState.CONNECTING
 import com.ns.greg.ble.ConnectionState.DISCONNECTED
 import com.ns.greg.ble.ConnectionState.DISCONNECTING
-import com.ns.greg.ble.ConnectionState.FAILURE
 import com.ns.greg.ble.interfacies.BleConnection
 import com.ns.greg.ble.interfacies.BleConnectionObserver
 import com.ns.greg.ble.interfacies.BleDevice
@@ -56,7 +55,7 @@ internal class BleConnectionImp(
 
   override fun open() {
     when (state) {
-      FAILURE, DISCONNECTED -> {
+      DISCONNECTED -> {
         if (bluetoothGatt == null) {
           bluetoothGatt = device.getBluetoothDevice()
               .connectGatt(context, autoConnect, gattCallback)
@@ -68,7 +67,11 @@ internal class BleConnectionImp(
         // nothing to do
       }
     }
+  }
 
+  override fun disconnect() {
+    setConnectionState(DISCONNECTING)
+    bluetoothGatt?.disconnect()
   }
 
   override fun close() {
@@ -173,30 +176,24 @@ internal class BleConnectionImp(
     ) {
       BleLogger.log("OnConnectionStateChange", "status: $status, newState: $newState")
       when (status) {
-        BluetoothGatt.GATT_SUCCESS -> {
-          when (newState) {
-            BluetoothProfile.STATE_CONNECTING -> {
-              instance.setConnectionState(CONNECTING)
-            }
-            BluetoothProfile.STATE_CONNECTED -> {
-              instance.setConnectionState(CONNECTED)
-            }
-            BluetoothProfile.STATE_DISCONNECTING -> {
-              instance.setConnectionState(DISCONNECTING)
-            }
-            BluetoothProfile.STATE_DISCONNECTED -> {
-              if (instance.getConnectionState() == CLOSING) {
-                instance.setConnectionState(CLOSED)
-                gatt?.close()
-              } else {
-                instance.setConnectionState(DISCONNECTED)
-              }
-            }
+        BluetoothGatt.GATT_SUCCESS -> when (newState) {
+          BluetoothProfile.STATE_CONNECTING -> instance.setConnectionState(CONNECTING)
+          BluetoothProfile.STATE_CONNECTED -> instance.setConnectionState(CONNECTED)
+          BluetoothProfile.STATE_DISCONNECTING -> instance.setConnectionState(DISCONNECTING)
+          BluetoothProfile.STATE_DISCONNECTED -> if (instance.getConnectionState() == CLOSING) {
+            instance.setConnectionState(CLOSED)
+            gatt?.close()
+          } else {
+            instance.setConnectionState(DISCONNECTED)
           }
         }
-        else -> {
-          instance.setConnectionState(FAILURE)
-          gatt?.close()
+        BluetoothGatt.GATT_CONNECTION_CONGESTED, BluetoothGatt.GATT_FAILURE -> {
+          if (instance.getConnectionState() == CLOSING) {
+            instance.setConnectionState(CLOSED)
+            gatt?.close()
+          } else {
+            instance.close()
+          }
         }
       }
 

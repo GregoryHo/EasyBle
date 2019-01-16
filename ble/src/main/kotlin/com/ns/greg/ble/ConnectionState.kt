@@ -6,7 +6,6 @@ package com.ns.greg.ble
  */
 enum class ConnectionState(private val state: Int) {
 
-  FAILURE(-1),
   CONNECTING(0),
   CONNECTED(1),
   DISCONNECTING(2),
@@ -16,7 +15,6 @@ enum class ConnectionState(private val state: Int) {
 
   override fun toString(): String {
     return when (state) {
-      -1 -> "FAILURE"
       0 -> "CONNECTING"
       1 -> "CONNECTED"
       2 -> "DISCONNECTING"
