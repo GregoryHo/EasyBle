@@ -55,7 +55,7 @@ internal class BleConnectionImp(
 
   override fun open() {
     when (state) {
-      DISCONNECTED -> {
+      DISCONNECTED, CLOSED -> {
         if (bluetoothGatt == null) {
           bluetoothGatt = device.getBluetoothDevice()
               .connectGatt(context, autoConnect, gattCallback)
