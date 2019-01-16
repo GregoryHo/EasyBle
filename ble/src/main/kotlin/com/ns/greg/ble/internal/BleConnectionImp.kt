@@ -163,6 +163,14 @@ internal class BleConnectionImp(
     }
   }
 
+  private fun gattClose() {
+    setConnectionState(CLOSED)
+    bluetoothGatt = bluetoothGatt?.let {
+      it.close()
+      null
+    }
+  }
+
   class BleGattCallback(reference: BleConnectionImp) : BluetoothGattCallback() {
 
     private val instance: BleConnectionImp by lazy {
@@ -175,29 +183,28 @@ internal class BleConnectionImp(
       newState: Int
     ) {
       BleLogger.log("OnConnectionStateChange", "status: $status, newState: $newState")
-      when (status) {
-        BluetoothGatt.GATT_SUCCESS -> when (newState) {
-          BluetoothProfile.STATE_CONNECTING -> instance.setConnectionState(CONNECTING)
-          BluetoothProfile.STATE_CONNECTED -> instance.setConnectionState(CONNECTED)
-          BluetoothProfile.STATE_DISCONNECTING -> instance.setConnectionState(DISCONNECTING)
-          BluetoothProfile.STATE_DISCONNECTED -> if (instance.getConnectionState() == CLOSING) {
-            instance.setConnectionState(CLOSED)
-            gatt?.close()
-          } else {
-            instance.setConnectionState(DISCONNECTED)
+      with(instance) {
+        when (status) {
+          BluetoothGatt.GATT_SUCCESS -> when (newState) {
+            BluetoothProfile.STATE_CONNECTING -> setConnectionState(CONNECTING)
+            BluetoothProfile.STATE_CONNECTED -> setConnectionState(CONNECTED)
+            BluetoothProfile.STATE_DISCONNECTING -> setConnectionState(DISCONNECTING)
+            BluetoothProfile.STATE_DISCONNECTED -> if (getConnectionState() == CLOSING) {
+              gattClose()
+            } else {
+              setConnectionState(DISCONNECTED)
+            }
+          }
+          else -> {
+            when (newState) {
+              BluetoothProfile.STATE_DISCONNECTED -> gattClose()
+              else -> close()
+            }
           }
         }
-        BluetoothGatt.GATT_CONNECTION_CONGESTED, BluetoothGatt.GATT_FAILURE -> {
-          if (instance.getConnectionState() == CLOSING) {
-            instance.setConnectionState(CLOSED)
-            gatt?.close()
-          } else {
-            instance.close()
-          }
-        }
-      }
 
-      instance.connectionObserver?.onConnectionStateChanged(instance.getConnectionState())
+        connectionObserver?.onConnectionStateChanged(instance.getConnectionState())
+      }
     }
 
     override fun onServicesDiscovered(
@@ -219,7 +226,7 @@ internal class BleConnectionImp(
         } else {
           BleLogger.log("OnServicesDiscovered failed.")
           /* just disconnect with BLE device */
-          gatt.disconnect()
+          instance.disconnect()
         }
       }
     }
