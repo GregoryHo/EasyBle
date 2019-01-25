@@ -160,7 +160,7 @@ class BleServer(
     uuid: UUID
   ): BleCharacteristicWrapper? {
     characteristicWrappersMap[device]?.forEach {
-      if (it.getCharacteristic().uuid == uuid) {
+      if (it.characteristic.uuid == uuid) {
         return it
       }
     }
@@ -176,7 +176,7 @@ class BleServer(
     for (key in characteristicWrappersMap.keys) {
       if (key == device) {
         characteristicWrappersMap[key]?.forEach {
-          if (it.getCharacteristic().uuid == uuid) {
+          if (it.characteristic.uuid == uuid) {
             it.setData(data)
             return@forEach
           }
@@ -194,7 +194,7 @@ class BleServer(
   ) {
     for (key in characteristicWrappersMap.keys) {
       characteristicWrappersMap[key]?.forEach {
-        if (it.getCharacteristic().uuid == uuid) {
+        if (it.characteristic.uuid == uuid) {
           it.setData(data)
         }
       }

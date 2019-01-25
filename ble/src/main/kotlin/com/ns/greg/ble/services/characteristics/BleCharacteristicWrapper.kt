@@ -10,7 +10,7 @@ import java.util.UUID
  * @since 2018/7/20
  */
 class BleCharacteristicWrapper internal constructor(
-  private val characteristic: BluetoothGattCharacteristic,
+  val characteristic: BluetoothGattCharacteristic,
   data: ByteArray?
 ) {
 
@@ -23,10 +23,6 @@ class BleCharacteristicWrapper internal constructor(
     data?.run {
       writeBuffer.setData(this)
     }
-  }
-
-  fun getCharacteristic(): BluetoothGattCharacteristic {
-    return characteristic
   }
 
   fun setData(data: ByteArray) {

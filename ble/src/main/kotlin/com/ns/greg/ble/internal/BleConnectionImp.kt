@@ -41,10 +41,12 @@ internal class BleConnectionImp(
   private val gattCallback: BleGattCallback by lazy(NONE) {
     BleGattCallback(this)
   }
-  private lateinit var characteristicWrapper: BleCharacteristicWrapper
+  @Volatile private lateinit var characteristicWrapper: BleCharacteristicWrapper
   @Volatile private var state = DISCONNECTED
   private var bluetoothGatt: BluetoothGatt? = null
   private var connectionObserver: BleConnectionObserver? = null
+  private var delayTime = 0L
+  private var executedTime = 0L
 
   init {
     BleLogger.log(TAG, message = "create connection")
@@ -113,7 +115,8 @@ internal class BleConnectionImp(
     characteristic: BluetoothGattCharacteristic,
     delayTime: Long
   ) {
-    characteristicWrapper = BleCharacteristicWrapper(characteristic)
+    this.characteristicWrapper = BleCharacteristicWrapper(characteristic)
+    this.delayTime = delayTime
     readImp(characteristic, delayTime)
   }
 
@@ -121,9 +124,14 @@ internal class BleConnectionImp(
     characteristic: BluetoothGattCharacteristic,
     delayTime: Long
   ) {
+    BleLogger.log(TAG, "PREPARE OPERATION [READ]", "(${characteristic.uuid}), delay: $delayTime ms")
     BleHook.instance.addTask(object : BaseRunnable<BaseRun>() {
       override fun runImp(): BaseRun? {
-        bluetoothGatt?.readCharacteristic(characteristic)
+        bluetoothGatt?.run {
+          BleLogger.log(TAG, "READ CHARACTERISTIC", "(${characteristic.uuid})")
+          readCharacteristic(characteristic)
+          operationExecuted()
+        }
         return null
       }
     })
@@ -136,7 +144,8 @@ internal class BleConnectionImp(
     data: ByteArray,
     delayTime: Long
   ) {
-    characteristicWrapper = BleCharacteristicWrapper(characteristic, data)
+    this.characteristicWrapper = BleCharacteristicWrapper(characteristic, data)
+    this.delayTime = delayTime
     writeImp(characteristic, delayTime)
   }
 
@@ -144,14 +153,16 @@ internal class BleConnectionImp(
     characteristic: BluetoothGattCharacteristic,
     delayTime: Long
   ) {
+    BleLogger.log(TAG, "PREPARE OPERATION [WRITE]", "(${characteristic.uuid}), delay: $delayTime ms")
     BleHook.instance.addTask(object : BaseRunnable<BaseRun>() {
       override fun runImp(): BaseRun? {
-        characteristicWrapper.run {
-          if (getCharacteristic() == characteristic) {
-            characteristic.value = getWriteBuffer().write()
-            characteristic.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
-            bluetoothGatt?.writeCharacteristic(characteristic)
-          }
+        characteristic.value = characteristicWrapper.getWriteBuffer()
+            .write()
+        characteristic.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+        bluetoothGatt?.run {
+          BleLogger.log(TAG, "WRITE CHARACTERISTIC", "(${characteristic.uuid})")
+          writeCharacteristic(characteristic)
+          operationExecuted()
         }
 
         return null
@@ -190,6 +201,12 @@ internal class BleConnectionImp(
       this.state = state
     }
   }
+
+  private fun operationExecuted() {
+    executedTime = System.currentTimeMillis()
+  }
+
+  private fun operationSpentTime() = System.currentTimeMillis() - executedTime
 
   private fun gattClose() {
     BleLogger.log(message = "close connection with the device")
@@ -241,19 +258,20 @@ internal class BleConnectionImp(
       status: Int
     ) {
       gatt?.let {
+        BleLogger.log(TAG, "ON SERVICES DISCOVERED", "status: $status")
         if (status == BluetoothGatt.GATT_SUCCESS) {
-          BleLogger.log(TAG, "ON SERVICES DISCOVERED", "success")
           it.services?.forEach { service ->
-            BleLogger.log(message = "uuid: ${service.uuid}")
-            /*service.characteristics?.forEach { characteristic ->
-              BleLogger.log("characteristic", "uuid: ${characteristic.uuid}")
-            }*/
+            BleLogger.log(functionName = "PRIMARY SERVICE", message = "(${service.uuid})")
+            BleLogger.log(functionName = "CHARACTERISTICS")
+            service.characteristics?.forEach { characteristic ->
+              BleLogger.log(message = "* (${characteristic.uuid})")
+              BleLogger.log(message = "  properties: [${characteristic.properties}]")
+            }
           }
 
           instance.device.setServices(it.services)
           instance.connectionObserver?.onDiscovered(status)
         } else {
-          BleLogger.log(TAG, "ON SERVICES DISCOVERED", "failed")
           /* just disconnect with BLE device */
           instance.disconnect()
         }
@@ -267,7 +285,10 @@ internal class BleConnectionImp(
     ) {
       characteristic?.let {
         val uuid = it.uuid
-        BleLogger.log(TAG, "ON CHARACTERISTIC READ", "id: $uuid, status: $status")
+        BleLogger.log(
+            TAG, "ON CHARACTERISTIC READ",
+            "($uuid), status: $status in ${instance.operationSpentTime()} ms"
+        )
         when (status) {
           BluetoothGatt.GATT_SUCCESS -> {
             with(instance.characteristicWrapper.getReadBuffer()) {
@@ -276,7 +297,7 @@ internal class BleConnectionImp(
                 instance.connectionObserver?.onRead(it, getData())
                 release(true)
               } else {
-                instance.readImp(it, 0)
+                instance.readImp(it, instance.delayTime)
               }
             }
           }
@@ -294,14 +315,18 @@ internal class BleConnectionImp(
     ) {
       characteristic?.let {
         val uuid = it.uuid
-        BleLogger.log(TAG, "ON CHARACTERISTIC WRITE", "id: $uuid, status: $status")
+        BleLogger.log(
+            TAG, "ON CHARACTERISTIC WRITE",
+            "($uuid), status: $status in ${instance.operationSpentTime()} ms"
+        )
         when (status) {
           BluetoothGatt.GATT_SUCCESS -> {
             with(instance.characteristicWrapper.getWriteBuffer()) {
               if (hasNext()) {
-                instance.writeImp(characteristic, 0)
+                instance.writeImp(characteristic, instance.delayTime)
               } else {
                 instance.connectionObserver?.onWrite(it, status)
+                release(true)
               }
             }
           }

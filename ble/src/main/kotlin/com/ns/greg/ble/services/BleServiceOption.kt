@@ -15,7 +15,7 @@ class BleServiceOption private constructor(
 
   init {
     characteristicWrappers.forEach {
-      service.addCharacteristic(it.getCharacteristic())
+      service.addCharacteristic(it.characteristic)
     }
   }
 
