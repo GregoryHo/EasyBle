@@ -33,6 +33,11 @@ internal class BleConnectionImp(
   private val autoConnect: Boolean
 ) : BleConnection {
 
+  private companion object Constants {
+
+    const val TAG = "BleConnection"
+  }
+
   private val gattCallback: BleGattCallback by lazy(NONE) {
     BleGattCallback(this)
   }
@@ -40,6 +45,10 @@ internal class BleConnectionImp(
   @Volatile private var state = DISCONNECTED
   private var bluetoothGatt: BluetoothGatt? = null
   private var connectionObserver: BleConnectionObserver? = null
+
+  init {
+    BleLogger.log(TAG, message = "create connection")
+  }
 
   override fun subscribe(observer: BleConnectionObserver) {
     this.connectionObserver = observer
@@ -54,8 +63,11 @@ internal class BleConnectionImp(
   }
 
   override fun open() {
-    when (state) {
+    BleLogger.log(TAG, "OPEN")
+    when (getConnectionState()) {
+      CONNECTED -> BleLogger.log(TAG, message = "device is already connected")
       DISCONNECTED, CLOSED -> {
+        BleLogger.log(TAG, message = "connecting to the device")
         if (bluetoothGatt == null) {
           bluetoothGatt = device.getBluetoothDevice()
               .connectGatt(context, autoConnect, gattCallback)
@@ -70,13 +82,31 @@ internal class BleConnectionImp(
   }
 
   override fun disconnect() {
-    setConnectionState(DISCONNECTING)
-    bluetoothGatt?.disconnect()
+    BleLogger.log(TAG, "DISCONNECT")
+    when (getConnectionState()) {
+      CONNECTING, CONNECTED -> {
+        BleLogger.log(message = "disconnecting with the device")
+        setConnectionState(DISCONNECTING)
+        bluetoothGatt?.disconnect()
+      }
+      DISCONNECTING, DISCONNECTED -> BleLogger.log(
+          message = "connect is already disconnecting/disconnected"
+      )
+      CLOSING, CLOSED -> BleLogger.log(message = "connection is already closing/closed")
+    }
   }
 
   override fun close() {
-    setConnectionState(CLOSING)
-    bluetoothGatt?.disconnect()
+    BleLogger.log(TAG, "CLOSE")
+    when (getConnectionState()) {
+      CONNECTING, CONNECTED -> {
+        BleLogger.log(message = "closing with the device")
+        setConnectionState(CLOSING)
+        bluetoothGatt?.disconnect()
+      }
+      DISCONNECTING, DISCONNECTED -> gattClose()
+      CLOSING, CLOSED -> BleLogger.log(message = "connection is already closing/closed")
+    }
   }
 
   override fun read(
@@ -142,7 +172,7 @@ internal class BleConnectionImp(
         val descriptor =
           characteristic.getDescriptor(UUID.fromString("00002902-0000-1000-8000-00805f9b34fb"))
         descriptor.value =
-            if (enable) BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE else BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE
+          if (enable) BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE else BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE
         bluetoothGatt?.writeCharacteristic(characteristic)
         return null
       }
@@ -157,13 +187,12 @@ internal class BleConnectionImp(
 
   fun setConnectionState(state: ConnectionState) {
     synchronized(this) {
-      if (this.state < CLOSING || state == CLOSED) {
-        this.state = state
-      }
+      this.state = state
     }
   }
 
   private fun gattClose() {
+    BleLogger.log(message = "close connection with the device")
     setConnectionState(CLOSED)
     bluetoothGatt = bluetoothGatt?.let {
       it.close()
@@ -182,7 +211,7 @@ internal class BleConnectionImp(
       status: Int,
       newState: Int
     ) {
-      BleLogger.log("OnConnectionStateChange", "status: $status, newState: $newState")
+      BleLogger.log(TAG, "ON CONNECTION STATE CHANGE", "status: $status, newState: $newState")
       with(instance) {
         when (status) {
           BluetoothGatt.GATT_SUCCESS -> when (newState) {
@@ -213,18 +242,18 @@ internal class BleConnectionImp(
     ) {
       gatt?.let {
         if (status == BluetoothGatt.GATT_SUCCESS) {
-          BleLogger.log("OnServicesDiscovered success.")
+          BleLogger.log(TAG, "ON SERVICES DISCOVERED", "success")
           it.services?.forEach { service ->
-            BleLogger.log("service", "uuid: ${service.uuid}")
-            service.characteristics?.forEach { characteristic ->
+            BleLogger.log(message = "uuid: ${service.uuid}")
+            /*service.characteristics?.forEach { characteristic ->
               BleLogger.log("characteristic", "uuid: ${characteristic.uuid}")
-            }
+            }*/
           }
 
           instance.device.setServices(it.services)
           instance.connectionObserver?.onDiscovered(status)
         } else {
-          BleLogger.log("OnServicesDiscovered failed.")
+          BleLogger.log(TAG, "ON SERVICES DISCOVERED", "failed")
           /* just disconnect with BLE device */
           instance.disconnect()
         }
@@ -238,7 +267,7 @@ internal class BleConnectionImp(
     ) {
       characteristic?.let {
         val uuid = it.uuid
-        BleLogger.log("onCharacteristicRead", "id: $uuid, status: $status")
+        BleLogger.log(TAG, "ON CHARACTERISTIC READ", "id: $uuid, status: $status")
         when (status) {
           BluetoothGatt.GATT_SUCCESS -> {
             with(instance.characteristicWrapper.getReadBuffer()) {
@@ -265,7 +294,7 @@ internal class BleConnectionImp(
     ) {
       characteristic?.let {
         val uuid = it.uuid
-        BleLogger.log("onCharacteristicWrite", "id: $uuid, status: $status")
+        BleLogger.log(TAG, "ON CHARACTERISTIC WRITE", "id: $uuid, status: $status")
         when (status) {
           BluetoothGatt.GATT_SUCCESS -> {
             with(instance.characteristicWrapper.getWriteBuffer()) {
